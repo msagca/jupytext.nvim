@@ -16,11 +16,17 @@ local write_to_ipynb = function(event, output_extension)
   jupytext_filename = vim.fn.resolve(vim.fn.expand(jupytext_filename))
 
   vim.cmd.write({ jupytext_filename, bang = true })
-  commands.run_jupytext_command(vim.fn.shellescape(jupytext_filename), {
+  local ok = commands.run_jupytext_command(vim.fn.shellescape(jupytext_filename), {
     ["--update"] = "",
     ["--to"] = "ipynb",
     ["--output"] = vim.fn.shellescape(ipynb_filename),
   })
+  -- The notebook was not updated: keep the buffer modified so the unsaved
+  -- changes are not silently lost on :quit
+  if not ok then
+    return
+  end
+
   local buf = vim.api.nvim_get_current_buf()
   vim.api.nvim_set_option_value("modified", false, { buf = buf })
 
