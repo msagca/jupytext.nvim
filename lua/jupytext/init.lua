@@ -141,7 +141,7 @@ local read_from_ipynb = function(ipynb_filename)
   end
 
   if not ft then
-    ft = metadata.language
+    ft = utils.get_filetype(metadata.language, jupytext_filename)
   end
 
   -- In order to make :undo a no-op immediately after the buffer is read, we

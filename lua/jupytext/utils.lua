@@ -1,11 +1,53 @@
 local M = {}
 
+-- Mirrors the languages jupytext supports (jupytext/languages.py), so the
+-- plugin expects the same file jupytext writes. Looked up case-insensitively
 local language_extensions = {
   python = "py",
+  python2 = "py",
+  python3 = "py",
+  pypy = "py",
   julia = "jl",
   r = "r",
-  R = "r",
   bash = "sh",
+  sh = "sh",
+  ["c++"] = "cpp",
+  ["c#"] = "cs",
+  cs = "cs",
+  csharp = "cs",
+  ["f#"] = "fsx",
+  fs = "fsx",
+  fsharp = "fsx",
+  clojure = "clj",
+  coconut = "coco",
+  gnuplot = "gp",
+  go = "go",
+  groovy = "groovy",
+  haskell = "hs",
+  idl = "pro",
+  java = "java",
+  javascript = "js",
+  js = "js",
+  logtalk = "lgt",
+  lua = "lua",
+  matlab = "m",
+  octave = "m",
+  maxima = "mac",
+  ocaml = "ml",
+  powershell = "ps1",
+  q = "q",
+  robotframework = "robot",
+  rust = "rs",
+  sage = "sage",
+  sas = "sas",
+  scala = "scala",
+  scheme = "ss",
+  sos = "sos",
+  stata = "do",
+  tcl = "tcl",
+  typescript = "ts",
+  ["wolfram language"] = "wolfram",
+  xonsh = "xsh",
 }
 
 local language_names = {
@@ -26,7 +68,7 @@ M.get_ipynb_metadata = function(filename)
   local language_info = metadata.language_info or {}
 
   local language = kernelspec.language or language_names[kernelspec.name] or language_info.name
-  local extension = language_extensions[language]
+  local extension = language and language_extensions[language:lower()]
   if extension == nil and language_info.file_extension then
     extension = language_info.file_extension:gsub("^%.", "")
   end
@@ -45,6 +87,15 @@ M.get_jupytext_file = function(filename, extension)
   end
   local fileroot = vim.fn.fnamemodify(filename, ":r")
   return fileroot .. "." .. extension
+end
+
+-- Use the notebook language as filetype when Neovim knows it (e.g. "bash"),
+-- otherwise detect it from the jupytext file (e.g. "c++" -> "cpp")
+M.get_filetype = function(language, filename)
+  if language and vim.list_contains(vim.fn.getcompletion("", "filetype"), language) then
+    return language
+  end
+  return vim.filetype.match({ filename = filename })
 end
 
 M.check_key = function(tbl, key)
