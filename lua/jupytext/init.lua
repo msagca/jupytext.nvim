@@ -55,7 +55,9 @@ local style_and_extension = function(metadata)
     else
       output_extension = M.config.output_extension
     end
-    to_extension_and_style = M.config.output_extension .. ":" .. M.config.style
+    -- Pass the resolved extension rather than "auto": jupytext can only resolve
+    -- "auto" from language_info, which not every notebook has
+    to_extension_and_style = (output_extension or "auto") .. ":" .. M.config.style
   end
 
   return custom_formatting, output_extension, to_extension_and_style
@@ -82,7 +84,7 @@ local read_from_ipynb = function(ipynb_filename)
   local jupytext_filename = utils.get_jupytext_file(ipynb_filename, output_extension)
   local jupytext_file_exists = vim.fn.filereadable(jupytext_filename) == 1
   -- filename is the notebook
-  local filename_exists = vim.fn.filereadable(ipynb_filename)
+  local filename_exists = vim.fn.filereadable(ipynb_filename) == 1
 
   if filename_exists and not jupytext_file_exists then
     commands.run_jupytext_command(vim.fn.shellescape(ipynb_filename), {
@@ -92,7 +94,7 @@ local read_from_ipynb = function(ipynb_filename)
   end
 
   -- This is when the magic happens and we read the new file into the buffer
-  if vim.fn.filereadable(jupytext_filename) then
+  if vim.fn.filereadable(jupytext_filename) == 1 then
     local jupytext_content = vim.fn.readfile(jupytext_filename)
 
     -- Need to add an extra line so that the undo dance that comes later on
@@ -153,7 +155,10 @@ local read_from_ipynb = function(ipynb_filename)
   vim.api.nvim_command "silent 1delete"
   vim.o.undolevels = levels
 
-  vim.api.nvim_command("setlocal fenc=utf-8 ft=" .. ft)
+  vim.api.nvim_command "setlocal fenc=utf-8"
+  if ft then
+    vim.api.nvim_command("setlocal ft=" .. ft)
+  end
 
   -- First time we enter the buffer redraw. Don't know why but jupytext.vim was
   -- doing it. Apply Chesterton's fence principle.
@@ -166,13 +171,11 @@ local read_from_ipynb = function(ipynb_filename)
 end
 
 M.setup = function(config)
-  vim.validate({ config = { config, "table", true } })
+  vim.validate("config", config, "table", true)
   M.config = vim.tbl_deep_extend("force", M.config, config or {})
 
-  vim.validate({
-    style = { M.config.style, "string" },
-    output_extension = { M.config.output_extension, "string" },
-  })
+  vim.validate("style", M.config.style, "string")
+  vim.validate("output_extension", M.config.output_extension, "string")
 
   vim.api.nvim_create_augroup("jupytext-nvim", { clear = true })
   vim.api.nvim_create_autocmd("BufReadCmd", {

@@ -19,17 +19,30 @@ M.get_ipynb_metadata = function(filename)
   local file = assert(io.open(filename, "r"))
   local content = file:read "a"
   file:close()
-  local metadata = vim.json.decode(content)["metadata"]
-  local language = metadata.kernelspec.language
-  if language == nil then
-    language = language_names[metadata.kernelspec.name]
-  end
+  -- Notebooks that were never run with a kernel may lack kernelspec and/or
+  -- language_info
+  local metadata = vim.json.decode(content)["metadata"] or {}
+  local kernelspec = metadata.kernelspec or {}
+  local language_info = metadata.language_info or {}
+
+  local language = kernelspec.language or language_names[kernelspec.name] or language_info.name
   local extension = language_extensions[language]
+  if extension == nil and language_info.file_extension then
+    extension = language_info.file_extension:gsub("^%.", "")
+  end
 
   return { language = language, extension = extension }
 end
 
 M.get_jupytext_file = function(filename, extension)
+  if extension == nil then
+    error(
+      "jupytext.nvim: couldn't determine the language of "
+        .. filename
+        .. ", set output_extension to open it (e.g. output_extension = \"py\")",
+      0
+    )
+  end
   local fileroot = vim.fn.fnamemodify(filename, ":r")
   return fileroot .. "." .. extension
 end
