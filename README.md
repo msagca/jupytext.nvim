@@ -13,10 +13,11 @@ features and a simpler configuration.
 return {
   "GCBallesteros/jupytext.nvim",
   config = true,
-  -- Depending on your nvim distro or config you may need to make the loading not lazy
-  -- lazy=false,
 }
 ```
+
+Depending on your Neovim distro or config, you may need to add `lazy = false`
+to make the loading not lazy.
 
 
 For `jupytext.nvim` to run correctly you will also need to make sure that you
@@ -36,11 +37,14 @@ representation you want jupytext to output. The default configuration is:
 ```lua
 {
   style = "hydrogen",
-  output_extension = "auto",  -- Default extension. Don't change unless you know what you are doing
-  force_ft = nil,  -- Default filetype. Don't change unless you know what you are doing
+  output_extension = "auto",
+  force_ft = nil,
   custom_language_formatting = {},
 }
 ```
+
+> Don't change the default extension (`output_extension`) or filetype
+> (`force_ft`) unless you know what you are doing.
 
 By default, the extension of the plain text file is automatically selected by
 jupytext. This can be modified by changing the extension from `auto` to any
@@ -75,7 +79,7 @@ custom_language_formatting = {
   python = {
     extension = "qmd",
     style = "quarto",
-    force_ft = "quarto", -- you can set whatever filetype you want here
+    force_ft = "quarto",
   },
 }
 ```
@@ -87,10 +91,12 @@ custom_language_formatting = {
   python = {
     extension = "md",
     style = "markdown",
-    force_ft = "markdown", -- you can set whatever filetype you want here
+    force_ft = "markdown",
   },
 }
 ```
+
+In both, `force_ft` can be set to whatever filetype you want.
 
 Setting force_ft is important to get other plugins like
 [otter.nvim](https://github.com/jmbuhr/otter.nvim) working correctly.
