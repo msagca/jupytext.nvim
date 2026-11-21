@@ -1,78 +1,77 @@
-# Jupytext.nvim
+# jupytext.nvim
 
-Seamlessly open [Jupyter Notebooks](http://jupyter.org) as there associated
-plain text alternatives. Powered by [jupytext](https://www.github.com/mwouts/jupytext).
+Open [Jupyter notebooks](https://jupyter.org) in Neovim as plain text and
+write your edits back to the notebook on save. The conversion is done by
+[jupytext](https://github.com/mwouts/jupytext).
 
-`jupytext.nvim` is a lua port of the original
-[jupytext.vim](https://www.github.com/goerz/jupytext.vim) with some additional
-features and a simpler configuration.
+This is a fork of
+[GCBallesteros/jupytext.nvim](https://github.com/GCBallesteros/jupytext.nvim),
+a Lua port of [goerz/jupytext.vim](https://github.com/goerz/jupytext.vim).
 
-## Installation
-`lazy.nvim` example:
-```lua
-return {
-  "GCBallesteros/jupytext.nvim",
-  config = true,
-}
+## Requirements
+
+Neovim 0.11 or later and the `jupytext` CLI on your `PATH`:
+
+```sh
+pip install jupytext
 ```
 
-Depending on your Neovim distro or config, you may need to add `lazy = false`
-to make the loading not lazy.
+Run `:checkhealth jupytext` to check that Neovim can find it.
 
+## Installation
 
-For `jupytext.nvim` to run correctly you will also need to make sure that you
-have the `jupytext` CLI installed (`pip install jupytext`).
+With [lazy.nvim](https://github.com/folke/lazy.nvim):
 
-If `jupytext` is available and yet when you open a notebook you still see a wall
-of inscrutable JSON then it may be that `jupytext.nvim` wasn't available due
-to lazy loading. The easiest fix is to not lazy load this plugin. For example
-if using `lazy.nvim` just set `lazy=false`. This plugin is tiny and will be a
-rounding error on your startup time.
+```lua
+{ "msagca/jupytext.nvim", lazy = false, opts = {} }
+```
+
+> Load the plugin at startup. If it loads after a notebook is opened, the
+> buffer shows the notebook's raw JSON.
+
+Without a plugin manager, call `setup` from your config:
+
+```lua
+require("jupytext").setup()
+```
+
+## Usage
+
+Opening `notebook.ipynb` converts it to a text file next to it, such as
+`notebook.py`, and loads that into the buffer. Writing the buffer updates the
+notebook with `jupytext --update`, which keeps the cell outputs. If the text
+file didn't exist before, it is deleted when the buffer is unloaded.
 
 ## Configuration
 
-The simplest configuration only requires you to decide what plain text
-representation you want jupytext to output. The default configuration is:
+These are the defaults:
 
 ```lua
-{
+require("jupytext").setup({
   style = "hydrogen",
   output_extension = "auto",
   force_ft = nil,
   custom_language_formatting = {},
-}
+})
 ```
 
-> Don't change the default extension (`output_extension`) or filetype
-> (`force_ft`) unless you know what you are doing.
+| Option | Description |
+| --- | --- |
+| `style` | jupytext format, e.g. `hydrogen`, `percent`, `light`, `markdown`, `quarto` |
+| `output_extension` | Text file extension. `auto` picks it from the notebook's language. |
+| `force_ft` | Buffer filetype. `nil` uses the notebook's language. |
+| `custom_language_formatting` | Per-language settings, keyed by the notebook's language |
 
-By default, the extension of the plain text file is automatically selected by
-jupytext. This can be modified by changing the extension from `auto` to any
-other file extension supported by Jupytext. This is most useful to those using
-Quarto or Markdown. Analogously, we can provide a default filetype that will be
-given to the new buffer by using `force_ft`. Again, this is only really useful
-to users of Quarto.
+> If the notebook's metadata doesn't name a language, set
+> `output_extension` to open it.
 
-> [!IMPORTANT]
-> Some combinations of style and extensions are incompatible and Jupytext will
-> fail if you attempt them, e.g. the `md` extension with the `quarto` style.
-> You will see this as an error from the `read_ipynb` function.
+Some style and extension pairs are rejected by jupytext, such as the `md`
+extension with the `quarto` style.
 
-If you need something different pass your own configuration to
-`require("jupytext").setup`, e.g.
+### Per-language settings
 
-```lua
-require("jupytext").setup({ style = "light" })
-```
-
-> [!TIP]
-> Quarto and markdown format users keep on reading!
-
-By default we use the `auto` mode of jupytext. This will create a script with
-the correct extension for each language. However, this can be overridden in a
-per language basis if you want to. For this add to the configuration options a
-field named `custom_language_formatting` which contains a series of per
-language fields. For example, to convert python files to quarto markdown:
+Each entry sets `extension`, `style` and, optionally, `force_ft`. This opens
+Python notebooks as Quarto documents:
 
 ```lua
 custom_language_formatting = {
@@ -84,23 +83,6 @@ custom_language_formatting = {
 }
 ```
 
-Or, for regular markdown:
-
-```lua
-custom_language_formatting = {
-  python = {
-    extension = "md",
-    style = "markdown",
-    force_ft = "markdown",
-  },
-}
-```
-
-In both, `force_ft` can be set to whatever filetype you want.
-
-Setting force_ft is important to get other plugins like
-[otter.nvim](https://github.com/jmbuhr/otter.nvim) working correctly.
-
-
-## Acknowledgements
-This plugin is a lua port of [goerz/jupytext.vim](https://www.github.com/goerz/jupytext.vim) and it wouldn't have existed without it.
+> Without `force_ft`, the buffer gets the notebook's language as its filetype
+> (`python` here). Set it for document formats so that plugins such as
+> [otter.nvim](https://github.com/jmbuhr/otter.nvim) see the right filetype.
